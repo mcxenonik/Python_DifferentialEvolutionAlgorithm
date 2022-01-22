@@ -33,7 +33,7 @@ def crossover(mutated, target, dims, cr):
     return trial
 
 
-def differential_evolution():
+def differential_evolution(variant):
 
     # define lower and upper bounds
     bounds = asarray([(-5.0, 5.0), (-5.0, 5.0)])
@@ -89,13 +89,20 @@ def differential_evolution():
                 best_vector = pop[argmin(obj_all)]
                 prev_obj = best_obj
                 obj_iter.append(best_obj)
-                # report progress at each iteration
-                print('Iteration: %d f([%s]) = %.5f' % (i, around(best_vector, decimals=5), best_obj))
+                
+                F *= (1.05)
+            else:
+                F /= 1.05
+
+            # report progress at each iteration
+            print('Iteration: %d f([%s]) = %.5f' % (i, around(best_vector, decimals=5), prev_obj))
+
             
     return [best_vector, best_obj, obj_iter]
 
 if __name__ == "__main__":
-    solution = differential_evolution()
+
+    solution = differential_evolution(1)
     print('\nSolution: f([%s]) = %.5f' % (around(solution[0], decimals=5), solution[1]))
 
     
