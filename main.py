@@ -1,13 +1,13 @@
 
-from random import choice, random
+from numpy import argmin, around, asarray, clip
+from numpy.random import rand, choice
 
-from numpy import asarray, clip
-from numpy.random import rand
+from matplotlib import pyplot
 
 
 # define objective function
 def obj(x):
-    return 0
+    return x[0]**2.0 + x[1]**2.0
 
 
 # define mutation operation
@@ -26,23 +26,35 @@ def check_bounds(mutated, bounds):
 def crossover(mutated, target, dims, cr):
     # generate a uniform random value for every dimension
     p = rand(dims)
+    
     # generate trial vector by binomial crossover
     trial = [mutated[i] if p[i] < cr else target[i] for i in range(dims)]
+    
     return trial
 
 
 def differential_evolution():
+
     # define lower and upper bounds
-    bounds = asarray([-5.0, 5.0])
+    bounds = asarray([(-5.0, 5.0), (-5.0, 5.0)])
 
     pop_size = 10
-    iter = 100
+    iter = 200
     F = 0.5
+    cr = 0.7
 
     # initialise population of candidate solutions randomly within the specified bounds
-    pop = bounds[:, 0] + (random(pop_size, len(bounds)) * (bounds[:, 1] - bounds[:, 0]))
+    pop = bounds[:, 0] + (rand(pop_size, len(bounds)) * (bounds[:, 1] - bounds[:, 0]))
 
+    # evaluate initial population of candidate solutions
     obj_all = [obj(ind) for ind in pop]
+    # find the best performing vector of initial population
+    best_vector = pop[argmin(obj_all)]
+    best_obj = min(obj_all)
+    prev_obj = best_obj
+
+    # initialise list to store the objective function value at each iteration
+    obj_iter = list()
 
     # run iterations of the algorithm
     for i in range(iter):
@@ -54,7 +66,41 @@ def differential_evolution():
 
             # perform mutation
             mutated = mutation([a, b, c], F)
-            mutated_bound = check_bounds([mutated], bounds)
+            mutated = check_bounds(mutated, bounds)
+
+            # perform crossover
+            trial = crossover(mutated, pop[j], len(bounds), cr)
+
+            # compute objective function value for target vector
+            obj_target = obj(pop[j])
+            # compute objective function value for trial vector
+            obj_trial = obj(trial)
+            # perform selection
+            if obj_trial < obj_target:
+                # replace the target vector with the trial vector
+                pop[j] = trial
+                # store the new objective function value
+                obj_all[j] = obj_trial
+
+            # find the best performing vector at each iteration
+            best_obj = min(obj_all)
+            # store the lowest objective function value
+            if best_obj < prev_obj:
+                best_vector = pop[argmin(obj_all)]
+                prev_obj = best_obj
+                obj_iter.append(best_obj)
+                # report progress at each iteration
+                print('Iteration: %d f([%s]) = %.5f' % (i, around(best_vector, decimals=5), best_obj))
+            
+    return [best_vector, best_obj, obj_iter]
 
 if __name__ == "__main__":
-    pass
+    solution = differential_evolution()
+    print('\nSolution: f([%s]) = %.5f' % (around(solution[0], decimals=5), solution[1]))
+
+    
+    # line plot of best objective function values
+    pyplot.plot(solution[2], '.-')
+    pyplot.xlabel('Improvement Number')
+    pyplot.ylabel('Evaluation f(x)')
+    pyplot.show()
