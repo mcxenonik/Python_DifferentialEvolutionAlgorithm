@@ -1,4 +1,3 @@
-
 from numpy import argmin, around, asarray, clip
 from numpy.random import rand, choice
 
@@ -80,6 +79,10 @@ def differential_evolution(bounds, pop_size, iter, F, cr):
                 best_vector = pop[argmin(obj_all)]
                 prev_obj = best_obj
                 obj_iter.append(best_obj)
+                
+                F *= (1.05)
+            else:
+                F /= 1.05
 
         # report progress at each iteration
         print('Iteration: %d f([%s]) = %.5f' % (i, around(best_vector, decimals=5), best_obj))
